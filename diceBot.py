@@ -4,12 +4,17 @@
 # @copyright  Copyright (c) 2016 Robert Thayer (http://www.gamergadgets.net)
 # @version    1.1
 # @link       http://www.gamergadgets.net
-# @author     Robert Thayer
+# @author     Jon Rankin, Robert Thayer
 
+# from random import randint
+import random
 from random import randint
-import discord # Imported from https://github.com/Rapptz/discord.py
+import discord as discord # Imported from https://github.com/Rapptz/discord.py
 import asyncio
 from discord.ext import commands
+
+#CONSTANTS
+stat_type = ['STR','DEX','CON','INT','WIS','CHA']
 
 # A dice bot for use with Discord
 bot = discord.Client()
@@ -39,11 +44,11 @@ def roll_basic(a, b, modifier, threshold):
     if (base + modifier) >= threshold:
         if modifier != 0:
             if modifier > 0:
-                results += "***Success***: {}+{} [{}] meets or beats the {} threshold.".format(base, modifier, (base + modifier), threshold)
+                results += "***{}+{} [{}]***".format(base, modifier, (base + modifier))
             else:
-                results += "***Success***: {}{} [{}] does not meet the {} threshold.".format(base, modifier, (base + modifier), threshold)
+                results += "***{}+{} [{}]***".format(base, modifier, (base + modifier))
         else:
-            results += "***Success***: {}".format(base)
+            results += "***{}***".format(base)
     else:
         if modifier != 0:
             if modifier > 0:
@@ -66,19 +71,20 @@ def roll_hit(num_of_dice, dice_type, hit, modifier, threshold):
         y = randint(1, int(dice_type))
         if (int(hit) > 0):
             if (y >= int(hit)):
-                results += "**{}** ".format(y)
+                results += "{}+".format(y)
                 total += 1
             else:
-                results += "{} ".format(y)
+                results += "{}+".format(y)
         else:
-            results += "{} ".format(y)
+            results += "{}+".format(y)
             total += y
+    results = results[:-1]
     total += int(modifier)
     if modifier != 0:
         if modifier > 0:
-            results += "+{} = {}".format(modifier, total)
+            results += "+{} = **{}**".format(modifier, total)
         else:
-            results += "{} = {}".format(modifier, total)
+            results += "{} = **{}**".format(modifier, total)
     else:
         results += "= {}".format(total)
     if threshold != 0:
@@ -87,6 +93,23 @@ def roll_hit(num_of_dice, dice_type, hit, modifier, threshold):
         else:
             results += " does not meet the {} threshold. ***Failure***".format(threshold)
     return results
+
+# Determines the style of character creation. Default is standard 4d6 drop 1 x 6
+def create_character(number_of_stats=6, number_of_dice=4, dropped_die=1, flex=1, modifier=0 ):
+
+    results = ""
+    for x in range(0, number_of_stats):
+        z = [random.randint(1,6) for _ in range(number_of_dice)]
+        print(z)
+        for y in range(0, dropped_die):
+             z.remove(min(z))
+        stat = (sum(z))+modifier
+        if (flex):
+           results += "{}, ".format(stat)
+        else:
+           results += "{}: {}, ".format(stat_type[x],stat)
+    return results[:-2]
+
 
 @bot.event
 @asyncio.coroutine 
@@ -105,10 +128,10 @@ def roll(ctx, roll : str):
     author = ctx.message.author
     if (roll.find('>') != -1):
         roll, threshold = roll.split('>')
-    if (roll.find('mod') != -1):
-        roll, modifier = roll.split('mod')
-    if (roll.find('!') != -1):
-        roll, hit = roll.split('!')
+    if (roll.find('+') != -1):
+        roll, modifier = roll.split('+')
+    #if (roll.find('!') != -1):
+    #    roll, hit = roll.split('!')
     if (roll.find('d') != -1):
         num_of_dice, dice_type = roll.split('d')
     elif (roll.find('-') != -1):
@@ -174,9 +197,10 @@ def roll(ctx, roll : str):
                 raise ValueError("Number of dice cannot be a negative number.")
                 return
         if a != 0 and b != 0:
-            yield from bot.say("{} rolls {}-{}. Result: {}".format(author, a, b, roll_basic(a, b, modifier, threshold)))
+            yield from bot.say("**{}** rolls 1d{}. Result: {}".format(author, b, roll_basic(a, b, modifier, threshold)))
         else:
-            yield from bot.say("{} rolls {}d{}. Results: {}".format(author, num_of_dice, dice_type, roll_hit(num_of_dice, dice_type, hit, modifier, threshold)))
+            yield from bot.say("**{}** rolls {}d{}. Results: {}".format(author, num_of_dice, dice_type, roll_hit(num_of_dice, dice_type, hit, modifier, threshold)))
+        yield from bot.delete_message(ctx.message)
     except ValueError as err:
         # Display error message to channel
         yield from bot.say(err)
@@ -189,6 +213,94 @@ def purge(ctx):
     deleted = yield from bot.purge_from(channel, limit=100, check=is_me)
     yield from bot.send_message(channel, 'Deleted {} message(s)'.format(len(deleted)))
 
-# Follow this helpful guide on creating a bot and adding it to your server. 
+
+#Bot command to create a new character
+@bot.group(pass_context=True,description='Rolls for new character stats')
+@asyncio.coroutine
+def create(ctx):
+    if ctx.invoked_subcommand is None:
+        #display the character to the channel
+        channel = ctx.message.channel
+        author = ctx.message.author 
+        yield from bot.send_message(channel, """```Markdown
+#{} created a 'Standard' character
+[Stats]: {}
+```""".format(author, create_character()))
+        yield from bot.delete_message(ctx.message)
+
+#sub command for char_type
+@create.command(pass_context=True)
+@asyncio.coroutine
+def char(ctx, type : str='standard', flex :str ='flex'):
+	try:
+		if ((type=='cali' or type=='amfat') and flex=='strict'):
+			raise ValueError("Strict not supported with this character stat template")
+		elif (type=='real'):
+			type, number_of_stats, number_of_dice, dropped_die, modifier = 'Realistic',6,3,0,0
+		elif (type=='cali'):
+			type, number_of_stats, number_of_dice, dropped_die, modifier = 'Californian',7,3,0,0
+		elif (type=='std'):
+			type, number_of_stats, number_of_dice, dropped_die, modifier = 'Standard',6,4,1,0
+		elif (type=='amfat'):
+                        type, number_of_stats, number_of_dice, dropped_die, modifier = 'American Fatcat',7,4,1,0
+		elif (type=='rise'):
+			type, number_of_stats, number_of_dice, dropped_die, modifier = 'Rise up',6,3,0,-1
+		elif (type=='hero'):
+			if flex.upper() not in stat_type:
+				raise ValueError("Please Specify the correct stat")
+				return
+			yield from bot.say("""```Markdown
+#{} created a True Hero
+{}: {}
+Other Stats: {}
+```""".format(ctx.message.author,flex.upper(), create_character(1,4,1,1,1), create_character(5,3,0,1,-1)))
+			yield from bot.delete_message(ctx.message)
+		else:
+			raise ValueError("Incorrect roll template. Please use '!create help' for options")
+			return
+		if (flex=='flex'):
+			flex=1
+		elif (flex=='strict'):
+			flex=0
+		elif (flex.upper() in stat_type):
+			return
+		else:
+			raise ValueError("Incorrect Parameter. Please use either 'strict' or 'flex' for stat assignment.")
+			return
+	except ValueError as err:
+		#display error
+		yield from bot.say(err)
+		return
+	yield from bot.say("""```Markdown
+#{} created a '{}' style character
+[Stats]: {}
+```""".format(ctx.message.author, type, create_character(number_of_stats, number_of_dice, dropped_die, flex, modifier)))
+	yield from bot.delete_message(ctx.message)
+
+@create.command(pass_context=True)
+@asyncio.coroutine
+def help(ctx):
+	yield from bot.say("""```Markdown
+# Creating a character
+
+Creates a Standard Character  by rolling 4d6 and dropping the lowest die for 6 stats.
+Can use the [char] sub-command to customize. usage !create char_type [StyleOfChar] [StatAssignment].
+
+Style of Character Options(optional):
+[real]:   Rolls 3d6 for 6 stats
+[cali]:   Rolls 3d6 for 7 stats, drop the lowest one. DOES NOT SUPPORT STRICT
+[std]:    Rolls 4d6 for 6 stats and drops the lowest dice on each roll
+[amfat]:  Rolls 4d6 for 7 stats and drops the lowest dice on each roll. Drop lowest stat. DOES NOT SUPPORT STRICT
+[rise]:   Rolls 3d6-1 for 6 stats. Proceed to drop 2 from any choice.
+[hero]:   Rolls 4d6+1 for primary stat. Then rolls 3d6-1 for the rest. NOTE: Supports Flexible only. e.g. !create char_type hero str
+
+Stat Assignment (optional)
+[flex]:   Flexible Stat Assignment*
+[strict]: Strict Stat Assignment, Assigns each stat in order*
+```""")
+	yield from bot.delete_message(ctx.message)
+
+
+# Follow this helpful guide on creating a bot and adding it to your server.
 # https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token
-bot.run('token')
+bot.run('Mjk2Mjc0Njc5NTg3NDA1ODI0.C7v4Bw.rYaj0X5fqRI1kWrW5tHmV620WnE')

@@ -1,4 +1,4 @@
-# Discord-Dice-Roller-Bot
+# Discord-Dice Roller
 A bot that handles most RPG dice rolls
 
 # Dependencies
@@ -26,10 +26,7 @@ Supported rolls are:
 - !roll 3d6 - Rolls 3 6-sided die
 
 #Modifiers
-- `!` Success marker. Used with 3d6 type rolls. !roll 10d6!5 will give you the number of times the dice rolls 5 or higher.
-- `>` Success marker. Used with 100, 50-100, 3d6 type rolls. !roll 100>50 will say "Success" if result is over 50 or "Failure" if not.
-- `mod` Modifier. Used with any roll. Adds or subtracts from the roll. !roll 100mod4 will add 4 to the roll.
+- `+` Modifier. Used with any roll. Adds or subtracts from the roll. !roll 100mod4 will add 4 to the roll.
 
-You can string these together:
-- `!roll 100>40mod-3` would choose a number between 1-100, subtract 3, then let you know if it was over 40.
-- `!roll 10d6!4mod2>3` would roll 10 d6, count number of dice rolled that are 4+, add 2 to that number, and let you know if that number was over 3.
+#Create Character
+!create char [char_type]
