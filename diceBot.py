@@ -284,7 +284,7 @@ def help(ctx):
 # Creating a character
 
 Creates a Standard Character  by rolling 4d6 and dropping the lowest die for 6 stats.
-Can use the [char] sub-command to customize. usage !create char_type [StyleOfChar] [StatAssignment].
+Can use the [char] sub-command to customize. usage !create char [StyleOfChar] [StatAssignment].
 
 Style of Character Options(optional):
 [real]:   Rolls 3d6 for 6 stats
@@ -303,4 +303,4 @@ Stat Assignment (optional)
 
 # Follow this helpful guide on creating a bot and adding it to your server.
 # https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token
-bot.run('Mjk2Mjc0Njc5NTg3NDA1ODI0.C7v4Bw.rYaj0X5fqRI1kWrW5tHmV620WnE')
+bot.run('ADD_API_KEY')
