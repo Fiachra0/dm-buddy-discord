@@ -28,6 +28,12 @@ Supported rolls are:
 #Modifiers
 - `+` Modifier. Used with any roll. Adds or subtracts from the roll. !roll 100mod4 will add 4 to the roll.
 
-#Create Character
+# Create Character
 !create char [char_type]
+- [real]:   Rolls 3d6 for 6 stats
+- [cali]:   Rolls 3d6 for 7 stats, drop the lowest one. DOES NOT SUPPORT STRICT
+- [std]:    Rolls 4d6 for 6 stats and drops the lowest dice on each roll
+- [amfat]:  Rolls 4d6 for 7 stats and drops the lowest dice on each roll. Drop lowest stat. DOES NOT SUPPORT STRICT
+- [rise]:   Rolls 3d6-1 for 6 stats. Proceed to drop 2 from any choice.
+- [hero]:   Rolls 4d6+1 for primary stat. Then rolls 3d6-1 for the rest. NOTE: Supports Flexible only. e.g. !create char_type hero str
 
